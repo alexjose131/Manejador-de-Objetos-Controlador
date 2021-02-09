@@ -25,9 +25,9 @@ io.on('connection', function(socket) {
     console.log(data);
   });
   socket.emit('respuesta', 'esta es la respuesta');
-  // socket.on('disconnect', function () {
-  //    console.log('A user disconnected');
-  // });
+  socket.on('disconnect', function () {
+     console.log('A user disconnected');
+  });
 });
 
 
