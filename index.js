@@ -19,8 +19,11 @@ app.use("/api", router);
 app.set("port", process.env.PORT || 3000);
 
 io.on('connection', function(socket) {
+  console.log('entra')
   console.log('A user connected', socket.handshake.address);
-
+  socket.on('new_message', (data) => {
+    console.log(data);
+  });
   socket.on('disconnect', function () {
      console.log('A user disconnected');
   });
