@@ -22,6 +22,15 @@ app.set("port", process.env.PORT || 3000);
 io_server.on("connection", function (socket) {
   console.log("Usuario conectado al coordinador", socket.handshake.address);
 
+  replicarObjeto(socket);
+});
+
+http.listen(app.get("port"), () => {
+  console.log(`Server running in port ${app.get("port")}`);
+  console.log(path.join(__dirname, "public"));
+});
+
+function replicarObjeto(socket) {
   //  replicar
   socket.on("replicar", (data1) => {
     // se conecta al servidor de replica 1
@@ -75,12 +84,7 @@ io_server.on("connection", function (socket) {
   socket.on("disconnect", function () {
     console.log("A user disconnected");
   });
-});
-
-http.listen(app.get("port"), () => {
-  console.log(`Server running in port ${app.get("port")}`);
-  console.log(path.join(__dirname, "public"));
-});
+}
 
 function globalCommit() {
   // enviar a los 2 servidores de replica
