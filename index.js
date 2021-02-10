@@ -32,7 +32,7 @@ http.listen(app.get("port"), () => {
 
 function replicarObjeto(socket) {
   //  replicar
-  socket.on("replicar", (data1) => {
+  socket.on("replicar", (data) => {
     // se conecta al servidor de replica 1
 
     const socket_2 = io(
@@ -44,7 +44,7 @@ function replicarObjeto(socket) {
 
     // vote_request 1
 
-    socket_2.emit("VOTE_REQUEST", data1.accion, function (res) {
+    socket_2.emit("VOTE_REQUEST", data.accion, function (res) {
       console.log("esta es la respuesta de la replica 1", res);
 
       if (res === "VOTE_COMMIT") {
@@ -59,10 +59,10 @@ function replicarObjeto(socket) {
 
         // vote_request 2
 
-        socket_3.emit("VOTE_REQUEST", data1.accion, function (res2) {
+        socket_3.emit("VOTE_REQUEST", data.accion, function (res2) {
           console.log("esta es la respuesta de la replica 2", res2);
           if (res2 === "VOTE_COMMIT") {
-            globalCommit();
+            globalCommit(socket_2, socket_3, data.objetos);
           }
         });
       } else {
@@ -86,7 +86,7 @@ function replicarObjeto(socket) {
   });
 }
 
-function globalCommit() {
+function globalCommit(s2, s3, datos) {
   // enviar a los 2 servidores de replica
   // const socket = io(
   //   "http://" +
@@ -95,9 +95,19 @@ function globalCommit() {
   //     process.env.SERVER_BACKUP_1_PORT
   // );
 
-  // socket.on("connect", () => {
-  //   socket.emit("GLOBAL_COMMIT", data.objetos);
-  // });
+  s2.emit("GLOBAL_COMMIT", datos, function (res_global_commit) {
+    console.log(
+      "esta es la respuesta de la replica 1 al global_commit",
+      res_global_commit
+    );
+  });
+
+  s3.emit("GLOBAL_COMMIT", datos, function (res_global_commit) {
+    console.log(
+      "esta es la respuesta de la replica 2 al global_commit",
+      res_global_commit
+    );
+  });
 
   console.log("GLOBAL COMMIT SATISFACTORIO");
 }
