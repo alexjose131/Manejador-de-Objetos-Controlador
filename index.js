@@ -7,8 +7,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
 
 app.use(morgan("dev"));
 app.use(cors());
@@ -18,21 +18,23 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", router);
 app.set("port", process.env.PORT || 3000);
 
-io.on('connection', function(socket) {
-  console.log('entra')
-  console.log('A user connected', socket.handshake.address);
-  socket.on('new_message', (data) => {
-    console.log(data);
+io.on("connection", function (socket) {
+  console.log("entra");
+  console.log("A user connected", socket.handshake.address);
+  socket.on("replicar", (data) => {
+    console.log("Comienza la replicacion");
+    console.log("Data a replicar: ", data);
   });
-  socket.emit('respuesta', 'esta es la respuesta');
-  socket.on('disconnect', function () {
-     console.log('A user disconnected');
+  socket.on("restaurar", () => {
+    console.log("Comienza la restauración");
+  });
+  socket.emit("respuesta", "esta es la respuesta");
+  socket.on("disconnect", function () {
+    console.log("A user disconnected");
   });
 });
-
 
 http.listen(app.get("port"), () => {
   console.log(`Server running in port ${app.get("port")}`);
   console.log(path.join(__dirname, "public"));
 });
-
