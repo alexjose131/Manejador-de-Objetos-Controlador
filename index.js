@@ -69,6 +69,50 @@ io_server.on("connection", function (socket) {
       }
     });
   });
+
+  //  restaurar
+  socket.on("restaurarObjetos", function (fn) {
+    // se conecta al servidor de replica 1
+    const socket_2 = io(
+      "http://" +
+        process.env.SERVER_BACKUP_1_IP +
+        ":" +
+        process.env.SERVER_BACKUP_1_PORT
+    );
+
+    socket_2.on("connect_error", function () {
+      socket_2.disconnect();
+
+      const socket_3 = io(
+        "http://" +
+          process.env.SERVER_BACKUP_2_IP +
+          ":" +
+          process.env.SERVER_BACKUP_2_PORT
+      );
+
+      socket_3.on("connect_error", function () {
+        socket_3.disconnect();
+        fn("Servidor de réplica 2 no responde");
+      });
+
+      socket_3.emit("recibirObjetos", function (res2) {
+        console.log("esta es la respuesta de la replica 2", res2);
+        fn({
+          message:
+            "Servidor de réplica 1 no responde. Réplica desde el servidor 2",
+          data: res2,
+        });
+      });
+    });
+
+    socket_2.emit("recibirObjetos", function (res) {
+      console.log("esta es la respuesta de la replica 1", res);
+      fn({
+        message: "Réplica desde el servidor 1",
+        data: res,
+      });
+    });
+  });
 });
 
 function globalCommit(s2, s3, datos) {
