@@ -23,7 +23,7 @@ io_server.on("connection", function (socket) {
   console.log("Usuario conectado al coordinador", socket.handshake.address);
 
   //  replicar
-  socket.on("replicar", function (data, fn) {
+  socket.on("replicarObjetos", function (data, fn) {
     let seReplico;
 
     // se conecta al servidor de replica 1
