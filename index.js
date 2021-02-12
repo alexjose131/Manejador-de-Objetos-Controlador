@@ -19,10 +19,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", router);
 app.set("port", process.env.PORT || 3000);
 
+//conexion por sockets
 io_server.on("connection", function (socket) {
   console.log("Usuario conectado al coordinador", socket.handshake.address);
 
-  //  replicar
+  //  Se ejecuta cuando llaman a replicarObjetos
   socket.on("replicarObjetos", function (data, fn) {
     let seReplico;
 
@@ -42,11 +43,13 @@ io_server.on("connection", function (socket) {
         process.env.SERVER_BACKUP_2_PORT
     );
 
+    //si falla la conexion con el servidor de replica 1 se ejecuta esta funcion
     socket_2.on("connect_error", function () {
       fn("El servidor 1 no responde")
       socket_2.disconnect();
     });
 
+    //si falla la conexion con el servidor de replica 2 se ejecuta esta funcion
     socket_3.on("connect_error", function () {
       fn("El servidor 2 no responde")
       socket_3.disconnect();
@@ -56,10 +59,12 @@ io_server.on("connection", function (socket) {
     socket_2.emit("VOTE_REQUEST", data.accion, function (res) {
       console.log("esta es la respuesta de la replica 1", res);
 
+      // si el servidor de replica 1 llega VOTE_COMMIT se ejecuta el VOTE_REQUEST al servidor de replica 2
       if (res === "VOTE_COMMIT") {
         // vote_request 2
         socket_3.emit("VOTE_REQUEST", data.accion, function (res2) {
           console.log("esta es la respuesta de la replica 2", res2);
+          //si los dos tienen VOTE_COMIT se hace GLOBAL_COMMIT
           if (res2 === "VOTE_COMMIT") {
             globalCommit(socket_2, socket_3, data.objetos);
             seReplico = true;
@@ -72,6 +77,7 @@ io_server.on("connection", function (socket) {
           }
         });
       } else {
+        //si el servidor de replicacion 1 manda VOTE_ABORT se manda GLOBAL_ABORT
         globalAbort(socket_2, socket_3);
         seReplico = false;
         fn(seReplico);
@@ -90,9 +96,11 @@ io_server.on("connection", function (socket) {
         process.env.SERVER_BACKUP_1_PORT
     );
 
+    //si falla la conexion con el servidor de replica 1 se ejecuta esta funcion
     socket_2.on("connect_error", function () {
       socket_2.disconnect();
 
+      // se conecta al servidor de replica 2
       const socket_3 = io(
         "http://" +
           process.env.SERVER_BACKUP_2_IP +
@@ -100,6 +108,7 @@ io_server.on("connection", function (socket) {
           process.env.SERVER_BACKUP_2_PORT
       );
 
+      //si falla la conexion con el servidor de replica 2 se ejecuta esta funcion
       socket_3.on("connect_error", function () {
         socket_3.disconnect();
         fn("Servidor de réplica 2 no responde");
@@ -125,6 +134,7 @@ io_server.on("connection", function (socket) {
   });
 });
 
+// manda a ambos replicadores el GLOBAL_COMMMIT
 function globalCommit(s2, s3, datos) {
   s2.emit("GLOBAL_COMMIT", datos, function (res_global_commit) {
     console.log(
@@ -143,6 +153,7 @@ function globalCommit(s2, s3, datos) {
   console.log("GLOBAL COMMIT SATISFACTORIO");
 }
 
+// manda a ambos replicadores el GLOBAL_ABORT
 function globalAbort(s2, s3) {
   s2.emit("GLOBAL_ABORT", function (res_global_abort) {
     console.log(
@@ -159,6 +170,7 @@ function globalAbort(s2, s3) {
   });
 }
 
+//se coloca el servidor en escucha
 http.listen(app.get("port"), () => {
   console.log(`Server running in port ${app.get("port")}`);
   console.log(path.join(__dirname, "public"));
