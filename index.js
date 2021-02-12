@@ -34,17 +34,27 @@ io_server.on("connection", function (socket) {
         process.env.SERVER_BACKUP_1_PORT
     );
 
+    // se conecta al servidor de replica 2
+    const socket_3 = io(
+      "http://" +
+        process.env.SERVER_BACKUP_2_IP +
+        ":" +
+        process.env.SERVER_BACKUP_2_PORT
+    );
+
+    socket_2.on("connect_error", function () {
+      fn("El servidor 1 no responde")
+      socket_2.disconnect();
+    });
+
+    socket_3.on("connect_error", function () {
+      fn("El servidor 2 no responde")
+      socket_3.disconnect();
+    });
+
     // vote_request 1
     socket_2.emit("VOTE_REQUEST", data.accion, function (res) {
       console.log("esta es la respuesta de la replica 1", res);
-
-      // se conecta al servidor de replica 2
-      const socket_3 = io(
-        "http://" +
-          process.env.SERVER_BACKUP_2_IP +
-          ":" +
-          process.env.SERVER_BACKUP_2_PORT
-      );
 
       if (res === "VOTE_COMMIT") {
         // vote_request 2
